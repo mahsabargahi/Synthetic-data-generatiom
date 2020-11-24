@@ -7,9 +7,9 @@ class Dist_Utils(object):
 
      DATA = pd.read_csv("S&P500(1970-2020).csv")
      RETURNS = DATA["Daily_Return_Pct"]
+     CLOSE = DATA["Close"]
 
-
-
+     mean = []
 
      def confidence_interval(self):
       pass

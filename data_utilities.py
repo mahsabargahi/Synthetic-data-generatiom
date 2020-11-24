@@ -11,7 +11,7 @@ def slice(data,x,y):
 
 
 
-def data_iterator(epoch = 10):
+def data_iterator(data,epoch = 10):
     """
     method to interate through data set
     :param epoch: number of rows per episode
