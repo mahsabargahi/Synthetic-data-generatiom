@@ -7,7 +7,7 @@ import statistics as stats
 
 #slice_slices the data by row,this function returns rows x to y
 def slice(data,x,y):
-    return data.iloc[int(x):int(y)-1]
+    return data.iloc[int(x)-1:int(y)-1,:]
 
 
 
@@ -35,6 +35,4 @@ def dated(data,x,y):
     return slice(data,i+1,l+2)
 #dated(data,"3/5/1970","3/10/1970")
 
-# datas = slice(data,1,300)
-# datas["Daily_Return_Pct"].plot()
-# pt.show()
+
