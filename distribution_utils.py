@@ -8,6 +8,7 @@ from statsmodels.tsa.stattools import adfuller
 from statsmodels.tsa.stattools import kpss
 import matplotlib.pyplot as plt
 import pylab
+from statsmodels.tsa.seasonal import seasonal_decompose
 class Dist_Utils(object):
 
      DATA = pd.read_csv("S&P500(1970-2020).csv")
@@ -98,6 +99,8 @@ def GBM(So, mu, sigma, W, T, N):
     return S, t
 
 
+def GBM_With_Trend(trend):
+    pass
 
 def GBM_Simulator(n):
     for i in range(n):
@@ -113,4 +116,37 @@ def GBM_Simulator(n):
         plt.savefig(f"GBM number {i}")
         plt.show()
 
-GBM_Simulator(5)
+def estimate_variance(k=5):
+    "A slow pure python implementation"
+    prices = ob.CLOSE.to_numpy()
+    log_prices = np.log(prices)
+    rets = np.diff(log_prices)
+    T = len(rets)
+    mu = np.mean(rets)
+    var_1 = np.var(rets, ddof=1, dtype=np.float64)
+    rets_k = (log_prices - np.roll(log_prices, k))[k:]
+    m = k * (T - k + 1) * (1 - k / T)
+    var_k = 1/m * np.sum(np.square(rets_k - k * mu))
+
+    # Variance Ratio
+    vr = var_k / var_1
+    # Phi1
+    phi1 = 2 * (2*k - 1) * (k-1) / (3*k*T)
+    # Phi2
+
+    def delta(j):
+        res = 0
+        for t in range(j+1, T+1):
+            t -= 1  # array index is t-1 for t-th element
+            res += np.square((rets[t]-mu)*(rets[t-j]-mu))
+        return res / ((T-1) * var_1)**2
+
+    phi2 = 0
+    for j in range(1, k):
+        phi2 += (2*(k-j)/k)**2 * delta(j)
+
+    return vr, (vr - 1) / np.sqrt(phi1), (vr - 1) / np.sqrt(phi2)
+ran = [2, 4, 6, 8, 10, 15, 20, 30, 40, 50, 100, 200, 500, 1000]
+
+for i in ran:
+    print (estimate_variance(i)[0],i)
