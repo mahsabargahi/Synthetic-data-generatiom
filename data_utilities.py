@@ -7,7 +7,7 @@ import statistics as stats
 
 #slice_slices the data by row,this function returns rows x to y
 def slice(data,x,y):
-    return data.iloc[int(x)-1:int(y)-1,:]
+    return data.iloc[int(x):int(y)-1]
 
 
 

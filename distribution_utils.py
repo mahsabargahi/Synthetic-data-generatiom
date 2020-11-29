@@ -18,13 +18,15 @@ class Dist_Utils(object):
      mean = []
 
      def mean_breaks(self):
-         data = dt.data_iterator(self.RETURNS,20)
+         data = dt.data_iterator(self.RETURNS,50)
          shifts = []
          for i,d in enumerate(data):
-             p = self.adf_test(d)
-             if p < .5:
-                 shifts.append([i,p])
-         print(shifts)
+             p = np.std(d.to_numpy())
+             shifts.append(p)
+         plt.hist(shifts, bins= 50)
+         plt.savefig('variance over time .png')
+         plt.show()
+         print(shifts[:20],np.std(shifts))
 
 
      def adf_test(self,timeseries):
@@ -59,6 +61,7 @@ class Dist_Utils(object):
          """
 
 ob = Dist_Utils()
+ob.mean_breaks()
 # pd.Series.plot(ob.RETURNS)
 
 # plt.hist(ob.RETURNS.to_numpy(), bins= 50)
