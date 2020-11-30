@@ -7,7 +7,7 @@ import scipy.stats as sc
 from statsmodels.tsa.stattools import adfuller
 from statsmodels.tsa.stattools import kpss
 import matplotlib.pyplot as plt
-import pylab
+import random
 from statsmodels.tsa.seasonal import seasonal_decompose
 class Dist_Utils(object):
 
@@ -18,16 +18,26 @@ class Dist_Utils(object):
      mean = []
 
      def mean_breaks(self):
-         data = dt.data_iterator(self.RETURNS,50)
-         shifts = []
+         data = dt.data_iterator(self.CLOSE,10)
+         means = []
+         sigmas = []
+         breaks = []
          for i,d in enumerate(data):
-             p = np.std(d.to_numpy())
-             shifts.append(p)
-         plt.hist(shifts, bins= 50)
-         plt.savefig('variance over time .png')
-         plt.show()
-         print(shifts[:20],np.std(shifts))
+             p = np.mean(d.to_numpy())
+             q = np.std(d.to_numpy())
+             means.append(p)
+             sigmas.append(q)
+         for i in range(len(means)-1):
+             if 1-self.z_test(mu = means[i], x_bar = means[i+1],sigma = sigmas[i],n = 50) < .05:
+                 breaks.append(i+1)
+         increase = []
+         for i in range(len(breaks)-1):
+             increase.append(means[breaks[i+1]]-means[breaks[i]])
+         return breaks,increase,len(breaks)/len(means)
 
+     def z_test(self, mu, x_bar, sigma, n):
+         z = (mu - x_bar)/(sigma/np.sqrt(n))
+         return sc.norm.cdf(z)
 
      def adf_test(self,timeseries):
          # Perform Dickey-Fuller test:
@@ -61,7 +71,7 @@ class Dist_Utils(object):
          """
 
 ob = Dist_Utils()
-ob.mean_breaks()
+
 # pd.Series.plot(ob.RETURNS)
 
 # plt.hist(ob.RETURNS.to_numpy(), bins= 50)
@@ -102,8 +112,22 @@ def GBM(So, mu, sigma, W, T, N):
     return S, t
 
 
-def GBM_With_Trend(trend):
-    pass
+def GBM_With_Trend(So, mu, sigma, W, T, N):
+    breaks, diff,lamda = ob.mean_breaks()
+    pois = np.random.poisson(lamda/10,N)
+    t = np.linspace(0., 1., N + 1)
+    S = []
+    S.append(So)
+    trend = random.randint(5,10)
+    for i in np.arange(1, int(N + 1)):
+        drift = (mu - 0.5 * sigma ** 2) * t[i]
+        diffusion = sigma * W[i - 1]
+        S_temp = So * np.exp(drift + diffusion)
+        if pois[i-1] == 1:
+           trend = trend*-1
+           S.append(S_temp+trend)
+        else: S.append(S_temp+trend)
+    return S, t
 
 def GBM_Simulator(n):
     for i in range(n):
@@ -113,11 +137,15 @@ def GBM_Simulator(n):
         t = np.arange(1,int(N)+1)
         b = np.random.normal(size = N+1)
         W = b.cumsum()
-        fake,m = GBM(ob.CLOSE.to_numpy()[1],np.mean(ob.RETURNS.to_numpy()),np.std(ob.RETURNS.to_numpy()),
+        fake,m = GBM_With_Trend(ob.CLOSE.to_numpy()[1],np.mean(ob.RETURNS.to_numpy()),np.std(ob.RETURNS.to_numpy()),
            W,T,N)
         plt.plot(np.arange(N+1),fake)
         plt.savefig(f"GBM number {i}")
         plt.show()
+
+
+
+GBM_Simulator(5)
 
 def estimate_variance(k=5):
     "A slow pure python implementation"
@@ -152,4 +180,5 @@ def estimate_variance(k=5):
 ran = [2, 4, 6, 8, 10, 15, 20, 30, 40, 50, 100, 200, 500, 1000]
 
 for i in ran:
-    print (estimate_variance(i)[0],i)
+    vr,z,z_2 = estimate_variance(i)
+    print (vr,sc.norm.cdf(z),i)
